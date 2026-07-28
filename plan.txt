@@ -1,0 +1,817 @@
+You are a senior full-stack engineer, geospatial engineer, backend architect, and product designer.
+
+Build a production-quality MVP for a **No-Code Geospatial Analysis Platform**.
+
+The platform should allow users with little or no GIS programming experience to upload or select an area, choose satellite data, run geospatial analyses through a graphical interface, visualize the result on an interactive map, and export the generated outputs.
+
+The product should feel like a simplified combination of:
+
+* Google Earth Engine
+* ArcGIS
+* QGIS processing tools
+* Canva-style no-code workflows
+* A modern SaaS dashboard
+
+Do not build a fake frontend demo.
+
+Build a real working system with functional APIs, database storage, background processing, raster calculations, map visualization, authentication, job tracking, and downloadable results.
+
+# Main MVP User Flow
+
+A user should be able to:
+
+1. Create an account.
+2. Log in.
+3. Create a project.
+4. Define an Area of Interest.
+5. Upload GeoJSON or draw a polygon on the map.
+6. Choose a satellite dataset.
+7. Choose a date range.
+8. Set a cloud-cover limit.
+9. Select an analysis operation.
+10. Start the analysis.
+11. Track the processing job.
+12. View the output as a map layer.
+13. Change layer opacity and visualization settings.
+14. View basic statistics.
+15. Download the output.
+
+# MVP Scope
+
+The first version must support:
+
+## Areas of Interest
+
+Support:
+
+* Drawing polygons on the map
+* Uploading GeoJSON
+* Validating uploaded geometries
+* Saving areas to the database
+* Calculating area in square kilometers
+* Preventing invalid or excessively large geometries
+
+Shapefile upload can be added later.
+
+## Satellite Data
+
+Initially support:
+
+* Sentinel-2 Level-2A
+* Landsat 8
+* Landsat 9
+
+Use STAC-compatible data sources where possible.
+
+Create a provider abstraction so additional providers can be added later.
+
+The satellite provider interface should support:
+
+* Searching scenes
+* Filtering by date range
+* Filtering by bounding box
+* Filtering by cloud cover
+* Returning asset URLs
+* Returning scene metadata
+
+## Geospatial Operations
+
+Implement the following operations:
+
+### NDVI
+
+Formula:
+
+NDVI = (NIR - Red) / (NIR + Red)
+
+### NDWI
+
+Formula:
+
+NDWI = (Green - NIR) / (Green + NIR)
+
+### NDBI
+
+Formula:
+
+NDBI = (SWIR - NIR) / (SWIR + NIR)
+
+### SAVI
+
+Formula:
+
+SAVI = ((NIR - Red) / (NIR + Red + L)) × (1 + L)
+
+Use a default L value of 0.5.
+
+### True Color Composite
+
+Use the correct red, green, and blue bands for each satellite.
+
+### False Color Composite
+
+Use NIR, red, and green bands.
+
+### Change Detection
+
+Allow the user to select:
+
+* First date range
+* Second date range
+* Index type
+
+Generate the index for both periods and subtract the first raster from the second.
+
+### Terrain Analysis
+
+Support uploaded DEM files and implement:
+
+* Slope
+* Aspect
+* Hillshade
+
+Terrain analysis can use uploaded GeoTIFF files in the first version.
+
+# Raster Processing
+
+Use real geospatial processing.
+
+Recommended libraries:
+
+* GDAL
+* Rasterio
+* NumPy
+* GeoPandas
+* Shapely
+* PyProj
+* rio-cogeo
+* xarray when useful
+
+Raster outputs should:
+
+* Be clipped to the selected Area of Interest
+* Use a consistent CRS
+* Preserve geospatial metadata
+* Properly represent NoData pixels
+* Avoid division-by-zero errors
+* Be converted to Cloud Optimized GeoTIFF when possible
+* Generate a lightweight preview for map visualization
+* Include calculated statistics
+
+Statistics should include:
+
+* Minimum
+* Maximum
+* Mean
+* Standard deviation
+* Valid pixel count
+* NoData pixel count
+
+For index operations, optionally calculate area grouped into simple classes such as:
+
+* Very low
+* Low
+* Moderate
+* High
+* Very high
+
+# No-Code Workflow System
+
+Design a workflow model that represents analysis as nodes.
+
+Example workflow:
+
+Satellite Source
+→ Date Filter
+→ Cloud Filter
+→ Median Composite
+→ NDVI
+→ Clip to AOI
+→ Export
+
+The initial frontend does not need a fully advanced drag-and-drop editor.
+
+For the MVP, create a guided workflow builder using forms and selectable processing steps.
+
+However, the backend workflow representation must already use nodes and edges so a visual node editor can be added later.
+
+Each workflow node should contain:
+
+* id
+* type
+* configuration
+* input references
+* output references
+* execution status
+* validation errors
+
+Suggested node types:
+
+* satellite_source
+* uploaded_raster
+* date_filter
+* cloud_filter
+* median_composite
+* mean_composite
+* ndvi
+* ndwi
+* ndbi
+* savi
+* true_color
+* false_color
+* change_detection
+* clip
+* slope
+* aspect
+* hillshade
+* statistics
+* export
+
+Validate workflows before execution.
+
+Reject workflows with:
+
+* Missing required inputs
+* Unsupported node connections
+* Invalid dates
+* Missing AOI
+* Cyclic dependencies
+* Unsupported band combinations
+
+# Architecture
+
+Use a monorepo.
+
+Suggested structure:
+
+apps/
+web/
+api/
+worker/
+
+packages/
+shared-types/
+workflow-engine/
+geospatial-core/
+config/
+
+infrastructure/
+docker/
+migrations/
+
+docs/
+
+# Technology Stack
+
+## Frontend
+
+Use:
+
+* Next.js
+* TypeScript
+* React
+* Tailwind CSS
+* MapLibre GL JS
+* TanStack Query
+* React Hook Form
+* Zod
+
+The user interface should be modern, responsive, clean, and easy for non-technical users.
+
+Main pages:
+
+* Landing page
+* Register
+* Login
+* Dashboard
+* Projects page
+* Create project
+* Project details
+* Analysis builder
+* Job details
+* Result viewer
+* Account settings
+
+## Backend API
+
+Use:
+
+* Python
+* FastAPI
+* SQLAlchemy
+* Alembic
+* Pydantic
+* PostgreSQL
+* PostGIS
+* Redis
+
+Use asynchronous endpoints where appropriate.
+
+Do not put heavy raster processing inside API request handlers.
+
+The API should validate the request, create a job, and send it to the worker.
+
+## Background Jobs
+
+Use:
+
+* Celery with Redis
+
+The worker should:
+
+1. Receive the job.
+2. Validate the workflow.
+3. Search for satellite scenes.
+4. Download or stream required assets.
+5. Process the raster.
+6. Generate the output.
+7. Calculate statistics.
+8. Store files.
+9. Update job progress.
+10. Mark the job as completed or failed.
+
+Implement retries for temporary errors.
+
+Do not retry permanently invalid workflows.
+
+## Database
+
+Use PostgreSQL with PostGIS.
+
+Create tables for:
+
+* users
+* refresh_tokens
+* projects
+* areas_of_interest
+* data_sources
+* workflows
+* workflow_nodes
+* workflow_edges
+* analysis_jobs
+* job_events
+* raster_outputs
+* file_uploads
+
+Use UUID primary keys.
+
+Include:
+
+* created_at
+* updated_at
+* useful indexes
+* foreign-key constraints
+* status fields
+* soft delete only where useful
+
+Geometry data must use PostGIS geometry types.
+
+# Authentication
+
+Implement:
+
+* User registration
+* Login
+* Password hashing
+* Short-lived access tokens
+* Refresh-token rotation
+* Logout
+* Current-user endpoint
+* Protected routes
+* Role field prepared for future admin support
+
+Use secure HTTP-only cookies when suitable.
+
+Never store plaintext passwords or refresh tokens.
+
+# Storage
+
+Create a storage abstraction.
+
+Support local storage in development.
+
+Prepare the interface for S3 or MinIO.
+
+Store:
+
+* Uploaded GeoJSON files
+* Uploaded GeoTIFF files
+* Temporary raster files
+* Final GeoTIFF outputs
+* COG outputs
+* Preview images
+* Metadata files
+
+Do not expose raw server file paths through the API.
+
+Use generated IDs and controlled download endpoints or signed URLs.
+
+# API Endpoints
+
+Implement endpoints similar to:
+
+## Authentication
+
+POST /api/v1/auth/register
+POST /api/v1/auth/login
+POST /api/v1/auth/refresh
+POST /api/v1/auth/logout
+GET /api/v1/auth/me
+
+## Projects
+
+POST /api/v1/projects
+GET /api/v1/projects
+GET /api/v1/projects/{project_id}
+PATCH /api/v1/projects/{project_id}
+DELETE /api/v1/projects/{project_id}
+
+## Areas of Interest
+
+POST /api/v1/projects/{project_id}/areas
+GET /api/v1/projects/{project_id}/areas
+GET /api/v1/areas/{area_id}
+PATCH /api/v1/areas/{area_id}
+DELETE /api/v1/areas/{area_id}
+
+## Workflows
+
+POST /api/v1/projects/{project_id}/workflows
+GET /api/v1/projects/{project_id}/workflows
+GET /api/v1/workflows/{workflow_id}
+PATCH /api/v1/workflows/{workflow_id}
+POST /api/v1/workflows/{workflow_id}/validate
+POST /api/v1/workflows/{workflow_id}/execute
+
+## Jobs
+
+GET /api/v1/jobs/{job_id}
+GET /api/v1/jobs/{job_id}/events
+POST /api/v1/jobs/{job_id}/cancel
+POST /api/v1/jobs/{job_id}/retry
+
+## Results
+
+GET /api/v1/jobs/{job_id}/results
+GET /api/v1/results/{result_id}
+GET /api/v1/results/{result_id}/statistics
+GET /api/v1/results/{result_id}/preview
+GET /api/v1/results/{result_id}/download
+
+## Uploads
+
+POST /api/v1/uploads/geojson
+POST /api/v1/uploads/geotiff
+
+Generate complete OpenAPI documentation.
+
+# Job Statuses
+
+Use clear job statuses:
+
+* queued
+* validating
+* searching_data
+* downloading
+* preprocessing
+* processing
+* generating_preview
+* calculating_statistics
+* uploading
+* completed
+* failed
+* cancelled
+
+Store job progress as a percentage.
+
+Store structured error data:
+
+* error_code
+* message
+* technical_details
+* failed_stage
+* retryable
+
+Do not expose stack traces to normal users.
+
+# Result Visualization
+
+The result viewer must include:
+
+* Interactive MapLibre map
+* Base map
+* AOI outline
+* Raster result overlay
+* Layer opacity control
+* Show or hide layer
+* Color legend
+* Cursor coordinates
+* Zoom controls
+* Fit-to-result button
+* Raster statistics
+* Download button
+* Job metadata
+
+For index rasters, use a configurable color ramp.
+
+Do not permanently bake visualization colors into analytical raster values.
+
+Keep the analytical GeoTIFF separate from the map preview.
+
+# Security
+
+Implement:
+
+* Input validation
+* File type validation
+* File size limits
+* Geometry complexity limits
+* Rate limiting
+* Authentication checks
+* Project ownership checks
+* Safe archive extraction
+* Safe temporary-file handling
+* Protection from path traversal
+* CORS configuration
+* Secure headers
+* Environment variable validation
+
+Do not trust filenames, MIME types, workflow configurations, or client-provided geometry metadata.
+
+# Testing
+
+Write meaningful tests.
+
+Include:
+
+## Backend Tests
+
+* Authentication tests
+* Project ownership tests
+* AOI validation tests
+* Workflow validation tests
+* Job creation tests
+* API authorization tests
+* Storage tests
+
+## Geospatial Tests
+
+Use small fixture rasters.
+
+Test:
+
+* NDVI values
+* NDWI values
+* NDBI values
+* SAVI values
+* Clipping
+* NoData handling
+* Division-by-zero handling
+* CRS handling
+* Statistics
+* COG creation
+
+## Frontend Tests
+
+Test:
+
+* Authentication forms
+* Project creation
+* AOI validation
+* Workflow configuration
+* Job status display
+* Result viewer controls
+
+# Development Environment
+
+Create Docker-based local development.
+
+Provide services for:
+
+* frontend
+* API
+* worker
+* PostgreSQL with PostGIS
+* Redis
+* MinIO if included
+
+Create:
+
+* Dockerfiles
+* docker-compose.yml
+* .env.example
+* database migrations
+* seed script
+* Makefile or task runner
+* setup documentation
+
+Suggested commands:
+
+make setup
+make up
+make down
+make migrate
+make seed
+make test
+make lint
+make format
+make logs
+
+# Code Quality
+
+Follow these rules:
+
+* Use modular architecture.
+* Use strict typing.
+* Keep business logic out of route handlers.
+* Separate domain logic from infrastructure logic.
+* Avoid giant service files.
+* Avoid duplicated raster formulas.
+* Add useful comments only where necessary.
+* Use structured logging.
+* Use consistent error responses.
+* Add database transactions where required.
+* Add cleanup for temporary processing files.
+* Make processing operations independently testable.
+* Do not silently ignore exceptions.
+* Do not use placeholder implementations for core features.
+* Do not fake successful satellite processing.
+
+# Implementation Strategy
+
+Work incrementally.
+
+Do not attempt the entire platform in one uncontrolled response.
+
+Follow this order:
+
+## Phase 1: Foundation
+
+Create:
+
+* Monorepo structure
+* Docker environment
+* FastAPI application
+* Next.js application
+* PostgreSQL/PostGIS connection
+* Redis connection
+* Celery worker
+* Environment configuration
+* Health-check endpoints
+
+## Phase 2: Authentication
+
+Implement:
+
+* User model
+* Registration
+* Login
+* Access tokens
+* Refresh tokens
+* Logout
+* Protected routes
+* Frontend authentication pages
+
+## Phase 3: Projects and AOIs
+
+Implement:
+
+* Project CRUD
+* AOI CRUD
+* GeoJSON validation
+* Polygon drawing
+* PostGIS storage
+* Project map page
+
+## Phase 4: Workflow Model
+
+Implement:
+
+* Workflow tables
+* Node and edge models
+* Workflow validation
+* Guided workflow builder
+* Supported operation definitions
+
+## Phase 5: Geospatial Engine
+
+Implement:
+
+* Raster abstraction
+* Band mapping
+* NDVI
+* NDWI
+* NDBI
+* SAVI
+* Clipping
+* Statistics
+* Preview generation
+* Unit tests
+
+## Phase 6: Satellite Provider
+
+Implement one working provider first.
+
+Prefer Sentinel-2 through a public STAC-compatible source.
+
+Implement:
+
+* Scene search
+* Cloud filtering
+* Asset selection
+* Band retrieval
+* Scene metadata
+* Errors for unavailable data
+
+## Phase 7: Background Execution
+
+Implement:
+
+* Job creation
+* Celery task
+* Progress updates
+* Job events
+* Failure handling
+* Retry handling
+* Result storage
+
+## Phase 8: Result Viewer
+
+Implement:
+
+* Result map
+* Raster overlay
+* Statistics
+* Legend
+* Opacity
+* Download
+
+## Phase 9: Remaining Operations
+
+Add:
+
+* True color
+* False color
+* Change detection
+* DEM uploads
+* Slope
+* Aspect
+* Hillshade
+
+## Phase 10: Hardening
+
+Add:
+
+* Tests
+* Rate limiting
+* Security validation
+* Cleanup jobs
+* Better logs
+* Documentation
+* CI workflow
+
+# Important Working Rules
+
+Before writing code:
+
+1. Inspect the current repository.
+2. Explain what already exists.
+3. Identify missing components.
+4. Produce a short implementation plan.
+5. Start with the earliest incomplete phase.
+
+After each phase:
+
+1. Run tests.
+2. Run linters.
+3. Fix errors.
+4. Show the resulting file structure.
+5. Explain how to run the completed functionality.
+6. List remaining limitations.
+7. Continue to the next logical phase only when the current phase works.
+
+When modifying an existing repository:
+
+* Preserve working functionality.
+* Do not rewrite unrelated files.
+* Do not delete code without explaining why.
+* Reuse existing conventions when they are reasonable.
+* Check imports and dependency versions.
+* Run migrations and tests after changes.
+
+When you encounter ambiguity, choose the simplest architecture that supports future expansion.
+
+Prioritize a working vertical slice:
+
+Register
+→ Create project
+→ Draw AOI
+→ Configure NDVI
+→ Start job
+→ Process Sentinel-2 data
+→ Display result
+→ Download GeoTIFF
+
+This complete vertical slice is more important than implementing many incomplete operations.
+
+Begin by inspecting the repository and creating the Phase 1 foundation. Do not create mock geospatial outputs. Every completed feature must actually work.
