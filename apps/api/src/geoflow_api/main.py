@@ -7,6 +7,7 @@ from geoflow_config import get_settings
 
 from geoflow_api.db import dispose_engine
 from geoflow_api.redis_client import close_redis
+from geoflow_api.routers.auth import router as auth_router
 from geoflow_api.routers.health import router as health_router
 
 
@@ -38,4 +39,4 @@ app.add_middleware(
 )
 
 app.include_router(health_router, prefix="/api/v1")
-
+app.include_router(auth_router, prefix="/api/v1")

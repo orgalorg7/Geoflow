@@ -4,7 +4,7 @@ WORKDIR /workspace
 
 COPY package.json package-lock.json ./
 COPY apps/web/package.json ./apps/web/package.json
-RUN npm ci --workspace=@geoflow/web
+RUN npm ci
 
 COPY apps/web ./apps/web
 
@@ -17,7 +17,7 @@ FROM node:22-alpine AS builder
 WORKDIR /workspace
 COPY package.json package-lock.json ./
 COPY apps/web/package.json ./apps/web/package.json
-RUN npm ci --workspace=@geoflow/web
+RUN npm ci
 COPY apps/web ./apps/web
 RUN npm run build --workspace=@geoflow/web
 

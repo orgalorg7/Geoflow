@@ -4,6 +4,8 @@ from alembic import context
 from geoflow_config import get_settings
 from sqlalchemy import engine_from_config, pool
 
+from geoflow_api.models import Base
+
 config = context.config
 
 if config.config_file_name is not None:
@@ -11,7 +13,7 @@ if config.config_file_name is not None:
 
 settings = get_settings()
 config.set_main_option("sqlalchemy.url", settings.alembic_database_url)
-target_metadata = None
+target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
@@ -44,4 +46,3 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
-

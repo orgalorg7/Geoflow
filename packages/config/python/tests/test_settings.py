@@ -12,3 +12,6 @@ def test_settings_have_safe_local_defaults(monkeypatch: pytest.MonkeyPatch) -> N
     assert settings.redis_url.endswith("/0")
     assert settings.celery_broker_url.endswith("/1")
     assert settings.celery_result_backend.endswith("/2")
+    assert settings.auth_access_token_minutes == 15
+    assert settings.auth_refresh_token_days == 7
+    assert settings.auth_cookie_secure is False

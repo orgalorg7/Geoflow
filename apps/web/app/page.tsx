@@ -19,7 +19,15 @@ export default function Home() {
           </span>
           GeoFlow
         </Link>
-        <span className="phase">Foundation · Phase 1</span>
+        <div className="homeActions">
+          <span className="phase">Authentication · Phase 2</span>
+          <Link className="navLink" href="/login">
+            Sign in
+          </Link>
+          <Link className="navButton" href="/register">
+            Create account
+          </Link>
+        </div>
       </nav>
 
       <section className="hero">
@@ -28,12 +36,18 @@ export default function Home() {
           <h1>Turn an area on the map into an answer.</h1>
           <p className="lede">
             GeoFlow is being built for people who need satellite insight without
-            writing geospatial code. The platform foundation is now in place.
+            writing geospatial code. Create a secure account to enter your
+            protected workspace.
           </p>
-          <a className="docsLink" href="http://localhost:8000/docs">
-            Explore the API
-            <span aria-hidden="true">↗</span>
-          </a>
+          <div className="heroActions">
+            <Link className="docsLink" href="/register">
+              Start with GeoFlow
+              <span aria-hidden="true">→</span>
+            </Link>
+            <Link className="secondaryLink" href="/login">
+              Sign in
+            </Link>
+          </div>
         </div>
         <SystemStatus />
       </section>

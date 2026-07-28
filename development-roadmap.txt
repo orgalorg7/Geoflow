@@ -1,0 +1,246 @@
+Phase 1 — Foundation and development environment
+Build the technical skeleton of the platform.
+What will be done:
+Inspect and document the existing repository
+Create the monorepo structure:
+apps/web
+apps/api
+apps/worker
+shared packages
+infrastructure, migrations, tests, and documentation
+Bootstrap Next.js, FastAPI, and Celery
+Configure PostgreSQL/PostGIS and Redis
+Add centralized environment configuration
+Add Dockerfiles and docker-compose.yml
+Add health checks for the API, database, Redis, and worker
+Create .env.example
+Add Makefile/task-runner commands
+Configure formatting, linting, and basic CI checks
+Write local setup documentation
+Completion result:
+The complete stack starts locally, all services communicate, and health checks pass.
+
+Phase 2 — Authentication and user accounts
+Create secure user identity and session management.
+What will be done:
+Create the user and refresh-token database models
+Add Alembic migrations
+Implement:
+Registration
+Login
+Access-token generation
+Refresh-token rotation
+Logout
+Current-user endpoint
+Hash passwords securely
+Store only hashed refresh tokens
+Support secure HTTP-only cookies where appropriate
+Add role fields for future administration
+Protect backend endpoints
+Build frontend registration and login pages
+Add frontend authentication state and protected routes
+Test registration, login, token refresh, logout, and unauthorized access
+Completion result:
+A user can register, sign in, refresh their session, access a protected dashboard, and log out.
+
+Phase 3 — Projects and Areas of Interest
+Allow authenticated users to organize work and define geographic areas.
+What will be done:
+Implement project CRUD
+Enforce project ownership
+Build dashboard and project pages
+Add a MapLibre map
+Allow polygon drawing and editing
+Support GeoJSON upload
+Validate:
+File type and size
+GeoJSON structure
+Geometry type
+Geometry validity
+Coordinate ranges
+Polygon complexity
+Maximum permitted area
+Calculate AOI area in square kilometres
+Store AOIs as PostGIS geometries
+Display saved AOIs on the project map
+Test AOI validation and cross-user authorization
+Completion result:
+A user can create a project, draw or upload an AOI, save it, and see it on the map.
+
+Phase 4 — Workflow model and guided builder
+Create the no-code analysis configuration system.
+What will be done:
+Create database tables for:
+Workflows
+Workflow nodes
+Workflow edges
+Define supported node types and their configurations
+Implement a directed-graph workflow representation
+Add node input/output rules
+Implement validation for:
+Missing inputs
+Missing AOI
+Invalid dates
+Cyclic dependencies
+Unsupported connections
+Unsupported datasets or bands
+Invalid operation parameters
+Build workflow CRUD and validation endpoints
+Build a guided frontend form for:
+Dataset
+Date range
+Cloud-cover limit
+AOI
+Analysis operation
+Visualization preferences
+Save configurations as nodes and edges
+Completion result:
+A user can configure and save an NDVI workflow, and the backend can validate whether it is executable.
+
+Phase 5 — Core geospatial engine
+Implement independently testable raster-processing functions.
+What will be done:
+Create raster and band abstractions
+Define band mappings for supported satellites
+Implement:
+NDVI
+NDWI
+NDBI
+SAVI
+Raster clipping
+Reprojection and CRS handling
+NoData handling
+Division-by-zero protection
+Calculate:
+Minimum
+Maximum
+Mean
+Standard deviation
+Valid-pixel count
+NoData-pixel count
+Add optional index classification
+Generate map previews without changing analytical values
+Convert outputs to Cloud Optimized GeoTIFFs
+Use small deterministic fixture rasters for tests
+Completion result:
+The engine can take local test rasters, perform valid index calculations, clip them to an AOI, and generate a verified GeoTIFF, preview, and statistics.
+
+Phase 6 — Real satellite-data provider
+Connect the platform to actual remote imagery.
+What will be done:
+Define a reusable satellite-provider interface
+Implement one real STAC provider for Sentinel-2 Level-2A
+Search scenes using:
+AOI bounding box
+Date range
+Cloud-cover limit
+Retrieve scene metadata and asset URLs
+Map provider assets to logical bands such as red and NIR
+Handle missing bands and unavailable imagery
+Determine scene ordering and composite selection
+Support streaming or controlled downloading of raster assets
+Add integration tests where practical
+Prepare the interface for Landsat 8 and 9
+Completion result:
+The backend can find genuine Sentinel-2 scenes for an AOI and obtain the correct assets required for NDVI.
+
+Phase 7 — Background analysis execution
+Connect workflows, satellite data, and raster processing through Celery.
+What will be done:
+Create analysis-job and job-event models
+Implement workflow execution endpoints
+Queue jobs through Redis and Celery
+Implement worker stages:
+Validate workflow
+Search for scenes
+Retrieve assets
+Preprocess imagery
+Create a composite
+Calculate the selected index
+Clip to the AOI
+Generate a COG
+Generate a preview
+Calculate statistics
+Save output metadata
+Store progress percentages and structured events
+Add structured failure information
+Retry temporary network/provider errors
+Avoid retries for invalid workflows
+Implement cancellation and controlled retry behavior
+Clean up temporary files
+Add a local storage abstraction with future S3/MinIO compatibility
+Completion result:
+A user can start a real Sentinel-2 NDVI job and track it until it completes or fails with a useful error.
+
+Phase 8 — Result viewer and downloads
+Let users inspect and export completed analyses.
+What will be done:
+Build job details and result viewer pages
+Display job status, progress, and event history
+Show:
+Base map
+AOI outline
+Raster overlay
+Dynamic color legend
+Cursor coordinates
+Raster statistics
+Job and source metadata
+Add controls for:
+Layer visibility
+Opacity
+Color ramp
+Value range
+Fit to result
+Serve previews through controlled endpoints
+Add authenticated GeoTIFF downloads
+Prevent raw server paths from appearing in API responses
+Confirm that preview colors do not alter the analytical raster
+Completion result:
+The full priority path works: register, create project, draw AOI, configure NDVI, run real processing, inspect the map, and download the result.
+
+Phase 9 — Additional datasets and operations
+Expand the platform after the vertical slice is stable.
+What will be done:
+Add Landsat 8 and Landsat 9 providers
+Add:
+NDWI
+NDBI
+SAVI
+True-color composites
+False-color composites
+Mean and median composites
+Implement change detection:
+Two date ranges
+Selected index
+Index calculation for both periods
+Second period minus first period
+Support GeoTIFF/DEM uploads
+Validate uploaded rasters
+Implement:
+Slope
+Aspect
+Hillshade
+Extend the workflow builder and result legends for these operations
+Add corresponding unit and integration tests
+Completion result:
+The system supports the complete set of analysis operations described in the MVP plan.
+
+Phase 10 — Security, reliability, and release hardening
+Prepare the MVP for realistic deployment and broader testing.
+What will be done:
+Add rate limiting
+Enforce upload and geometry limits
+Strengthen path-traversal and archive-extraction protection
+Add secure temporary-file handling
+Configure CORS and security headers
+Validate all environment variables at startup
+Improve structured logging and error monitoring
+Add stale-file and temporary-file cleanup jobs
+Add database indexes and review slow queries
+Test concurrent jobs and worker failures
+Improve retry, cancellation, and recovery behavior
+Expand backend, frontend, and geospatial tests
+Add production Docker configurations
+Complete OpenAPI and developer documentation
+Add deployment, backup, and operational guidance
+Add a CI workflow for tests, linting, and builds

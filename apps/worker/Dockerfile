@@ -9,9 +9,8 @@ WORKDIR /workspace
 COPY packages/config/python /workspace/packages/config/python
 COPY apps/worker /workspace/apps/worker
 
-RUN pip install /workspace/packages/config/python /workspace/apps/worker
+RUN pip install -e /workspace/packages/config/python -e "/workspace/apps/worker[dev]"
 
 WORKDIR /workspace/apps/worker
 
 CMD ["celery", "--app", "geoflow_worker.celery_app:celery_app", "worker", "--loglevel=INFO"]
-
