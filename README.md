@@ -2,8 +2,9 @@
 
 GeoFlow is a no-code geospatial analysis platform. The current implementation
 provides the Docker-first monorepo foundation, secure user authentication, and
-Phase 3 project/AOI management: a Next.js and MapLibre web application, FastAPI
-API, Celery worker, PostgreSQL/PostGIS, Redis, and rotating sessions.
+project/AOI management together with the Phase 4 directed workflow builder: a
+Next.js and MapLibre web application, FastAPI API, Celery worker,
+PostgreSQL/PostGIS, Redis, and rotating sessions.
 
 ## Prerequisites
 
@@ -65,6 +66,35 @@ To test the complete Phase 3 browser flow:
 Development limits can be configured with `AOI_MAX_UPLOAD_BYTES`,
 `AOI_MAX_VERTICES`, and `AOI_MAX_AREA_SQ_KM`.
 
+## Analysis workflows
+
+Phase 4 adds project-owned workflows stored as directed graphs. Each guided
+workflow contains AOI, dataset, operation, and visualization nodes connected by
+typed input/output ports. The API exposes supported datasets, bands,
+operations, parameters, color ramps, and connection rules to the frontend.
+The Phase 4 catalog contains Sentinel-2 Level-2A and NDVI; the later roadmap
+phases add processing support and more datasets and indices.
+
+Validation detects missing inputs or AOIs, invalid date windows, cycles,
+unsupported connections, unsupported datasets or bands, and invalid operation
+or visualization parameters. A valid workflow is marked executable; execution
+itself begins in Phase 7.
+
+To test the Phase 4 browser flow:
+
+1. Sign in, create a project, and save at least one AOI.
+2. Under **Analysis workflows**, click **Configure a workflow**.
+3. Select Sentinel-2 Level-2A, a date range, cloud limit, and **NDVI**.
+4. Choose the preview color ramp, value range, and opacity.
+5. Click **Save and validate workflow**.
+6. Confirm the page reports **Workflow is executable**.
+7. Return to the project and confirm the saved workflow can be edited or
+   deleted.
+
+The protected workflow endpoints are documented at
+http://localhost:8000/docs. Run `make test` to exercise graph validation,
+workflow ownership, API persistence, and frontend graph construction.
+
 ## Common commands
 
 | Command | Purpose |
@@ -96,5 +126,4 @@ docs/
 ```
 
 The empty package directories contain notes describing responsibilities planned
-for later phases. Workflow and raster-processing implementations begin in
-Phases 4 and 5.
+for later phases. Raster-processing implementation begins in Phase 5.

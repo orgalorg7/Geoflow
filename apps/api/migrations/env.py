@@ -54,6 +54,9 @@ def run_migrations_online() -> None:
         # The PostGIS image adds topology and tiger to the database search path.
         # GeoFlow migrations own only public-schema application tables.
         connection.execute(text("SET search_path TO public"))
+        # SQLAlchemy 2 starts a transaction for the SET statement. Commit it so
+        # Alembic can own and commit the migration transaction that follows.
+        connection.commit()
         context.configure(
             connection=connection,
             target_metadata=target_metadata,

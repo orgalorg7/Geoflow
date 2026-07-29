@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from geoalchemy2 import Geometry
 from sqlalchemy import DateTime, Float, ForeignKey, Index, String, Text, func
@@ -7,6 +8,9 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from geoflow_api.models.base import Base
+
+if TYPE_CHECKING:
+    from geoflow_api.models.workflow import Workflow
 
 
 class Project(Base):
@@ -29,6 +33,9 @@ class Project(Base):
     )
 
     aois: Mapped[list["AreaOfInterest"]] = relationship(
+        back_populates="project", cascade="all, delete-orphan"
+    )
+    workflows: Mapped[list["Workflow"]] = relationship(
         back_populates="project", cascade="all, delete-orphan"
     )
 

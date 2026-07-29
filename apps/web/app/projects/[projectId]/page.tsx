@@ -8,8 +8,11 @@ import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { apiRequest } from "@/lib/api";
 import type { AreaOfInterest, Position, Project } from "@/lib/projects";
+import type { WorkflowSummary } from "@/lib/workflows";
 
-const ProjectMap = dynamic(() => import("@/components/project-map"), { ssr: false });
+const ProjectMap = dynamic(() => import("@/components/project-map"), {
+  ssr: false,
+});
 
 export default function ProjectPage() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -18,6 +21,7 @@ export default function ProjectPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [project, setProject] = useState<Project | null>(null);
   const [aois, setAois] = useState<AreaOfInterest[]>([]);
+  const [workflows, setWorkflows] = useState<WorkflowSummary[]>([]);
   const [pageLoading, setPageLoading] = useState(true);
   const [drawing, setDrawing] = useState(false);
   const [draft, setDraft] = useState<Position[]>([]);
@@ -36,14 +40,21 @@ export default function ProjectPage() {
     Promise.all([
       apiRequest<Project>(`/projects/${projectId}`),
       apiRequest<AreaOfInterest[]>(`/projects/${projectId}/aois`),
+      apiRequest<WorkflowSummary[]>(`/projects/${projectId}/workflows`),
     ])
-      .then(([projectResult, aoiResult]) => {
+      .then(([projectResult, aoiResult, workflowResult]) => {
         if (!active) return;
         setProject(projectResult);
         setAois(aoiResult);
+        setWorkflows(workflowResult);
       })
       .catch((caught: unknown) => {
-        if (active) setError(caught instanceof Error ? caught.message : "Project failed to load.");
+        if (active)
+          setError(
+            caught instanceof Error
+              ? caught.message
+              : "Project failed to load.",
+          );
       })
       .finally(() => {
         if (active) setPageLoading(false);
@@ -54,7 +65,10 @@ export default function ProjectPage() {
   }, [projectId, user]);
 
   const draftAreaHint = useMemo(
-    () => (draft.length < 3 ? `${draft.length}/3 minimum vertices` : `${draft.length} vertices`),
+    () =>
+      draft.length < 3
+        ? `${draft.length}/3 minimum vertices`
+        : `${draft.length} vertices`,
     [draft.length],
   );
 
@@ -109,7 +123,9 @@ export default function ProjectPage() {
       );
       cancelDrawing();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "AOI could not be saved.");
+      setError(
+        caught instanceof Error ? caught.message : "AOI could not be saved.",
+      );
     } finally {
       setSaving(false);
     }
@@ -134,7 +150,9 @@ export default function ProjectPage() {
       setAois((current) => [saved, ...current]);
       event.currentTarget.reset();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "GeoJSON upload failed.");
+      setError(
+        caught instanceof Error ? caught.message : "GeoJSON upload failed.",
+      );
     } finally {
       setSaving(false);
     }
@@ -149,7 +167,26 @@ export default function ProjectPage() {
       setAois((current) => current.filter((item) => item.id !== aoi.id));
       if (editingId === aoi.id) cancelDrawing();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "AOI deletion failed.");
+      setError(
+        caught instanceof Error ? caught.message : "AOI deletion failed.",
+      );
+    }
+  }
+
+  async function deleteWorkflow(workflow: WorkflowSummary) {
+    if (!window.confirm(`Delete the “${workflow.name}” workflow?`)) return;
+    try {
+      await apiRequest<void>(
+        `/projects/${projectId}/workflows/${workflow.id}`,
+        { method: "DELETE" },
+      );
+      setWorkflows((current) =>
+        current.filter((item) => item.id !== workflow.id),
+      );
+    } catch (caught) {
+      setError(
+        caught instanceof Error ? caught.message : "Workflow deletion failed.",
+      );
     }
   }
 
@@ -199,7 +236,9 @@ export default function ProjectPage() {
           />
           <div className="mapStatus">
             <span className={drawing ? "active" : ""} />
-            {drawing ? "Drawing mode · click map to add vertices" : `${aois.length} saved areas`}
+            {drawing
+              ? "Drawing mode · click map to add vertices"
+              : `${aois.length} saved areas`}
           </div>
         </section>
 
@@ -224,7 +263,10 @@ export default function ProjectPage() {
                   Cancel
                 </button>
               </div>
-              <p>Click the map to add points. Drag a point to refine the boundary.</p>
+              <p>
+                Click the map to add points. Drag a point to refine the
+                boundary.
+              </p>
               <label>
                 Area name
                 <input
@@ -257,13 +299,21 @@ export default function ProjectPage() {
                 disabled={saving || draft.length < 3}
                 type="submit"
               >
-                {saving ? "Validating…" : editingId ? "Save changes" : "Save area"}
+                {saving
+                  ? "Validating…"
+                  : editingId
+                    ? "Save changes"
+                    : "Save area"}
               </button>
             </form>
           ) : (
             <>
               <div className="aoiActions">
-                <button className="primaryButton" onClick={beginDrawing} type="button">
+                <button
+                  className="primaryButton"
+                  onClick={beginDrawing}
+                  type="button"
+                >
                   Draw polygon
                 </button>
                 <span>or upload a GeoJSON polygon</span>
@@ -294,20 +344,82 @@ export default function ProjectPage() {
                   <span>{aois.length}</span>
                 </div>
                 {aois.length === 0 ? (
-                  <p className="sidebarEmpty">No areas yet. Draw one directly on the map.</p>
+                  <p className="sidebarEmpty">
+                    No areas yet. Draw one directly on the map.
+                  </p>
                 ) : (
                   <div className="aoiList">
                     {aois.map((aoi) => (
                       <article key={aoi.id}>
                         <div>
                           <h3>{aoi.name}</h3>
-                          <p>{aoi.area_sq_km.toLocaleString(undefined, { maximumFractionDigits: 2 })} km²</p>
+                          <p>
+                            {aoi.area_sq_km.toLocaleString(undefined, {
+                              maximumFractionDigits: 2,
+                            })}{" "}
+                            km²
+                          </p>
                         </div>
                         <div>
-                          <button onClick={() => beginEditing(aoi)} type="button">
+                          <button
+                            onClick={() => beginEditing(aoi)}
+                            type="button"
+                          >
                             Edit
                           </button>
-                          <button onClick={() => void deleteAOI(aoi)} type="button">
+                          <button
+                            onClick={() => void deleteAOI(aoi)}
+                            type="button"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              <section className="savedWorkflows">
+                <div className="sectionHeading">
+                  <h2>Analysis workflows</h2>
+                  <span>{workflows.length}</span>
+                </div>
+                <Link
+                  className={`workflowCreateLink ${aois.length === 0 ? "disabled" : ""}`}
+                  href={
+                    aois.length > 0
+                      ? `/projects/${projectId}/workflows/new`
+                      : "#"
+                  }
+                  aria-disabled={aois.length === 0}
+                >
+                  <span>+</span>
+                  {aois.length > 0
+                    ? "Configure a workflow"
+                    : "Save an AOI to build a workflow"}
+                </Link>
+                {workflows.length > 0 && (
+                  <div className="workflowList">
+                    {workflows.map((workflow) => (
+                      <article key={workflow.id}>
+                        <div>
+                          <h3>{workflow.name}</h3>
+                          <p>
+                            Updated{" "}
+                            {new Date(workflow.updated_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div>
+                          <Link
+                            href={`/projects/${projectId}/workflows/${workflow.id}`}
+                          >
+                            Edit
+                          </Link>
+                          <button
+                            onClick={() => void deleteWorkflow(workflow)}
+                            type="button"
+                          >
                             Delete
                           </button>
                         </div>

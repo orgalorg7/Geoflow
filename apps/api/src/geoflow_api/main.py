@@ -10,6 +10,10 @@ from geoflow_api.redis_client import close_redis
 from geoflow_api.routers.auth import router as auth_router
 from geoflow_api.routers.health import router as health_router
 from geoflow_api.routers.projects import router as projects_router
+from geoflow_api.routers.workflows import (
+    definitions_router as workflow_definitions_router,
+)
+from geoflow_api.routers.workflows import router as workflows_router
 
 
 @asynccontextmanager
@@ -42,3 +46,5 @@ app.add_middleware(
 app.include_router(health_router, prefix="/api/v1")
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(projects_router, prefix="/api/v1")
+app.include_router(workflow_definitions_router, prefix="/api/v1")
+app.include_router(workflows_router, prefix="/api/v1")

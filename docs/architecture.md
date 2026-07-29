@@ -39,3 +39,36 @@ Project ownership is checked before AOIs are read or changed. Unauthorized
 project IDs return the same not-found response as nonexistent IDs. Polygon
 areas are computed geodesically with WGS84, while PostGIS stores validated
 geometry and provides a GiST spatial index for future searches.
+
+Workflow requests follow a separate ownership-aware service path:
+
+```text
+Guided builder
+  -> workflow CRUD API
+  -> workflow / node / edge tables
+  -> directed-graph validator
+       -> node type and port rules
+       -> AOI and dataset checks
+       -> date, band, and parameter checks
+       -> cycle detection
+```
+
+The graph is stored independently of its validation result so the user can save
+an incomplete configuration and receive actionable errors. Structural
+constraints still prevent duplicate node keys, dangling edges, and multiple
+connections to one target input. A workflow is executable only when the
+validator returns no errors.
+
+The current guided graph has four node types:
+
+```text
+AOI.geometry ──> Dataset.aoi
+      │
+      └────────> Operation.aoi
+Dataset.raster ─> Operation.raster ─> Visualization.raster
+```
+
+Workflow definitions are served by the protected
+`GET /api/v1/workflow-definitions` endpoint, keeping the frontend form aligned
+with backend dataset, band, operation, parameter, visualization, and connection
+rules.
