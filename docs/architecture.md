@@ -72,3 +72,31 @@ Workflow definitions are served by the protected
 `GET /api/v1/workflow-definitions` endpoint, keeping the frontend form aligned
 with backend dataset, band, operation, parameter, visualization, and connection
 rules.
+
+## Geospatial core
+
+Raster processing lives in a shared package with no HTTP, database, provider,
+or Celery dependencies:
+
+```text
+Logical raster bands
+  -> grid-alignment and NoData checks
+  -> NDVI / NDWI / NDBI / SAVI
+  -> AOI clipping and optional reprojection
+  -> analytical statistics
+  -> optional index classification
+  -> Cloud Optimized GeoTIFF + independent PNG preview
+```
+
+Each `Raster` contains a two-dimensional float array, validity mask, affine
+pixel transform, CRS, NoData value, and optional name. Raster values and masks
+are immutable after construction. Index outputs combine the masks of every
+input band and additionally mask zero denominators and non-finite results.
+
+Preview rendering operates on a separate RGBA array. It cannot alter the
+analytical values later written to the COG. The COG and preview paths are
+returned with structured statistics by the high-level artifact pipeline.
+
+Phase 5 uses generated local fixtures so numerical behavior remains
+deterministic. Phase 6 supplies real provider assets to these abstractions, and
+Phase 7 invokes the same package from Celery jobs.

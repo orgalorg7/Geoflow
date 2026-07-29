@@ -4,7 +4,8 @@ GeoFlow is a no-code geospatial analysis platform. The current implementation
 provides the Docker-first monorepo foundation, secure user authentication, and
 project/AOI management together with the Phase 4 directed workflow builder: a
 Next.js and MapLibre web application, FastAPI API, Celery worker,
-PostgreSQL/PostGIS, Redis, and rotating sessions.
+PostgreSQL/PostGIS, Redis, rotating sessions, and the Phase 5 raster-processing
+engine.
 
 ## Prerequisites
 
@@ -95,6 +96,36 @@ The protected workflow endpoints are documented at
 http://localhost:8000/docs. Run `make test` to exercise graph validation,
 workflow ownership, API persistence, and frontend graph construction.
 
+## Geospatial processing engine
+
+Phase 5 adds the independently testable `geoflow-geospatial-core` Python
+package. It provides immutable raster and logical-band abstractions,
+provider-neutral Sentinel-2 and Landsat band mappings, and implementations of
+NDVI, NDWI, NDBI, and SAVI.
+
+The engine propagates NoData masks, protects every index calculation from
+division by zero, clips rasters to GeoJSON AOIs, transforms AOIs between
+coordinate reference systems, and reprojects raster grids. It calculates
+minimum, maximum, mean, standard deviation, valid-pixel count, and NoData-pixel
+count.
+
+Analytical results can be classified, written as Cloud Optimized GeoTIFFs, and
+rendered as transparent color-ramp PNG previews. Preview creation never changes
+the analytical raster values. The high-level artifact pipeline combines index
+calculation, AOI clipping, statistics, optional classification, COG output, and
+preview generation.
+
+Run the deterministic local-raster tests with:
+
+```bash
+docker compose run --rm --no-deps api \
+  python -m pytest /workspace/packages/geospatial-core/tests
+```
+
+These tests generate all fixture rasters in temporary directories and do not
+contact a satellite provider. Real Sentinel-2 discovery begins in Phase 6, and
+background execution begins in Phase 7.
+
 ## Common commands
 
 | Command | Purpose |
@@ -125,5 +156,5 @@ infrastructure/
 docs/
 ```
 
-The empty package directories contain notes describing responsibilities planned
-for later phases. Raster-processing implementation begins in Phase 5.
+The remaining empty package directories contain notes describing
+responsibilities planned for later phases.

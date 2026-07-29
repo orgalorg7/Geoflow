@@ -27,6 +27,6 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-      - run: python -m pip install -e packages/config/python -e "apps/api[dev]" -e "apps/worker[dev]"
-      - run: python -m ruff check apps/api apps/worker packages/config/python
-      - run: python -m pytest apps/api/tests apps/worker/tests packages/config/python/tests
+      - run: python -m pip install -e packages/config/python -e "packages/geospatial-core[dev]" -e "apps/api[dev]" -e "apps/worker[dev]"
+      - run: python -m ruff check apps/api apps/worker packages/config/python packages/geospatial-core
+      - run: python -m pytest apps/api/tests apps/worker/tests packages/config/python/tests packages/geospatial-core/tests

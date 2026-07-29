@@ -43,6 +43,7 @@ services:
     volumes:
       - ./apps/api:/workspace/apps/api
       - ./packages/config/python:/workspace/packages/config/python
+      - ./packages/geospatial-core:/workspace/packages/geospatial-core
       - geoflow_storage:/workspace/storage
     depends_on:
       postgres:
@@ -75,6 +76,7 @@ services:
     volumes:
       - ./apps/worker:/workspace/apps/worker
       - ./packages/config/python:/workspace/packages/config/python
+      - ./packages/geospatial-core:/workspace/packages/geospatial-core
       - geoflow_storage:/workspace/storage
     depends_on:
       postgres:
@@ -135,4 +137,3 @@ volumes:
   postgres_data:
   redis_data:
   geoflow_storage:
-
