@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     auth_access_cookie_name: str = "geoflow_access"
     auth_refresh_cookie_name: str = "geoflow_refresh"
 
+    aoi_max_upload_bytes: int = 2_000_000
+    aoi_max_vertices: int = 5_000
+    aoi_max_area_sq_km: float = 100_000.0
+
 
 @lru_cache
 def get_settings() -> Settings:

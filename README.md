@@ -1,9 +1,9 @@
 # GeoFlow
 
 GeoFlow is a no-code geospatial analysis platform. The current implementation
-provides the Docker-first monorepo foundation plus Phase 2 user authentication:
-a Next.js web application, FastAPI API, Celery worker, PostgreSQL/PostGIS,
-Redis, rotating sessions, and a protected dashboard.
+provides the Docker-first monorepo foundation, secure user authentication, and
+Phase 3 project/AOI management: a Next.js and MapLibre web application, FastAPI
+API, Celery worker, PostgreSQL/PostGIS, Redis, and rotating sessions.
 
 ## Prerequisites
 
@@ -43,6 +43,28 @@ To test the complete browser flow:
 3. Log out and confirm that `/dashboard` redirects to `/login`.
 4. Sign in again and reload `/dashboard` to confirm session restoration.
 
+## Projects and areas of interest
+
+Phase 3 includes user-owned project CRUD and PostGIS-backed polygon areas of
+interest. Users can draw a polygon on a MapLibre map, drag its vertices to edit
+it, or upload a `.geojson`/`.json` file containing one Polygon.
+
+GeoFlow validates file size and type, GeoJSON structure, polygon geometry,
+coordinate ranges, vertex complexity, and maximum area before saving anything.
+Area is calculated geodesically in square kilometres.
+
+To test the complete Phase 3 browser flow:
+
+1. Sign in and create a project from http://localhost:3000/dashboard.
+2. Open the project and click **Draw polygon**.
+3. Click at least three map positions, name the area, and save it.
+4. Click **Edit**, drag vertices, and save the changes.
+5. Upload `docs/examples/cairo-aoi.geojson` and confirm both areas appear.
+6. Sign in as a different user and confirm the first user's projects are hidden.
+
+Development limits can be configured with `AOI_MAX_UPLOAD_BYTES`,
+`AOI_MAX_VERTICES`, and `AOI_MAX_AREA_SQ_KM`.
+
 ## Common commands
 
 | Command | Purpose |
@@ -74,5 +96,5 @@ docs/
 ```
 
 The empty package directories contain notes describing responsibilities planned
-for later phases. Project, workflow, and raster-processing implementations begin
-in Phases 3 through 5.
+for later phases. Workflow and raster-processing implementations begin in
+Phases 4 and 5.

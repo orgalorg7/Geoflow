@@ -1,0 +1,18 @@
+{
+  "type": "Feature",
+  "properties": {
+    "name": "Cairo sample AOI"
+  },
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [31.1924, 29.9858],
+        [31.3235, 29.9858],
+        [31.3235, 30.1014],
+        [31.1924, 30.1014],
+        [31.1924, 29.9858]
+      ]
+    ]
+  }
+}
