@@ -1,4 +1,4 @@
-# GeoFlow!
+# GeoFlow
 
 GeoFlow is a no-code geospatial analysis platform. The current implementation
 provides the Docker-first monorepo foundation, secure user authentication, and
